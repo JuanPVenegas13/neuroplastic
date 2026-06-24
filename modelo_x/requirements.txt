@@ -1,0 +1,4 @@
+# Modelo X — Fase 2 (prototipo)
+# En Apple Silicon (M4), `pip install torch` ya trae el backend MPS (wheel arm64).
+torch>=2.2
+matplotlib>=3.7

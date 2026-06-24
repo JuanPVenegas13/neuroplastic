@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Entorno (vive en ~/Developer/.venv, fuera del proyecto; por si acaso)
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# Datos/trazas regenerables (las FIGURAS .png de fase SÍ se versionan como evidencia)
+*.csv
