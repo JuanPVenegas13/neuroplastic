@@ -65,6 +65,18 @@ conclusiones se ganan con datos, no se asumen.
   Modelo X clavado en el olvido de naive ahí, nunca lo reclamó); Modelo X navega drift
   *estructural* por gradiente natural y ahorra al revisitar, **donde EWC/Adam ni siquiera
   aprende la tarea nueva**. No se fabricó un ganador.
+- **Fase 9 (bloque vs por-parámetro, retención alcanzable).** Arquitectura SEPARABLE
+  (tronco compartido + una cabeza por tarea) para que la retención simultánea SÍ sea
+  posible y comparar el congelamiento por **bloque** (Modelo X) contra el soft-freeze
+  por-**parámetro** (EWC). Tres hipótesis cayeron, medidas: (a) multi-cabeza es
+  **necesario pero no suficiente** — con tronco justo (d=64) nadie retiene (cuello de
+  botella = tronco compartido); (b) la retención simultánea exige **capacidad sobrante
+  + anclaje fuerte** (d=256, EWC λ~1e10 → min(ret_A,acc_B)≈0.65); (c) **predicción
+  falsable REFUTADA**: engrosar el Fisher de EWC a granularidad de bloque (mímica de
+  Modelo X) **destruye** la retención (min 0.65→0.25), al nivel del fracaso de Modelo X
+  (ret_A≈0.10). Per-param y bloque **divergen, no convergen**. Limitación concreta
+  localizada: el termostato por **bloque** es demasiado crudo para la holgura sub-bloque
+  que la retención simultánea exige. Sin ganador fabricado.
 
 ---
 
@@ -130,10 +142,15 @@ Subclases/infra reutilizadas: `phase5/ablated_trainer.py` (AblatedTrainer + Reve
 2. **Validar rendimiento REAL en M4/MPS — PARCIAL (Fase 8.0).** Ya corre en `mps`
    (`get_device()=='mps'`); se encontró y corrigió un bug float64→MPS en `kfac.py`.
    **Falta** medir ms/paso CPU vs MPS de forma sistemática (`run_demo` con timing).
-3. **(Opcional) Benchmark con cabezas/módulos por tarea** (no una sola cabeza) donde la
-   retención simultánea SÍ sea alcanzable: ahí EWC y un Modelo X con congelamiento podrían
-   compararse en el MISMO eje sin el límite estructural de la cabeza única (cabo de F8).
-4. **(Opcional) Salir del juguete.** Tarea más realista que el lag-shift sintético
+3. **~~Benchmark con cabezas por tarea (retención alcanzable).~~ HECHO (Fase 9).** Multi-
+   cabeza separable; resultado: la retención simultánea exige capacidad + anclaje
+   por-parámetro, y el congelamiento por **bloque** de Modelo X es demasiado crudo
+   (refuta la predicción "EWC→hard-freeze"). Ver `phase9/README_fase9.md`.
+4. **(Cabo de F9) Termostato con granularidad SUB-BLOQUE.** Congelar por fila/canal según
+   curvatura local (no por bloque entero) y re-correr el test 9.3: ¿cierra la brecha con
+   EWC por-parámetro? Es la mejora de diseño que el resultado de F9 señala directamente.
+5. **(Opcional) Salir del juguete.** Tarea más realista que el lag-shift sintético
    (p.ej. texto a nivel carácter con deriva real) para reforzar la validez externa.
-5. **(Opcional) Calendario de consolidación principiado** que escale con la profundidad
+6. **(Opcional) Medir ms/paso CPU vs MPS** sistemático (cierre cuantitativo del paso #2).
+7. **(Opcional) Calendario de consolidación principiado** que escale con la profundidad
    automáticamente (en la Fase 4.4 se ajustó a mano).
