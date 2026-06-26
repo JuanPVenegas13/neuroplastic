@@ -12,3 +12,7 @@ venv/
 
 # Datos/trazas regenerables (las FIGURAS .png de fase SÍ se versionan como evidencia)
 *.csv
+.ipynb_checkpoints/
+.env
+# Figura suelta que el demo regenera dentro del paquete (la curada vive en la raíz)
+/modelo_x/feedback_loop.png

@@ -1,0 +1,3 @@
+# Dependencias del proyecto (ver modelo_x/requirements.txt para el detalle).
+# En Apple Silicon (M4), `pip install torch` ya trae el backend MPS (wheel arm64).
+-r modelo_x/requirements.txt
