@@ -77,6 +77,15 @@ conclusiones se ganan con datos, no se asumen.
   (ret_A≈0.10). Per-param y bloque **divergen, no convergen**. Limitación concreta
   localizada: el termostato por **bloque** es demasiado crudo para la holgura sub-bloque
   que la retención simultánea exige. Sin ganador fabricado.
+- **Fase 10 (¿se cierra la brecha? continuo de granularidad).** Se mapeó el continuo
+  param→row→tensor→block (anclaje suave) y el hard-freeze canal vs bloque (mecanismo real).
+  (a) **El acantilado es BLOQUE-específico**: param/row/tensor retienen todos ~0.6, solo
+  bloque cae (~0.29) — el "pico por canal" de 1 semilla era ruido (corregido con
+  multi-semilla). Como Modelo X ya rastrea K-FAC **por-Linear**, el fix mínimo es la
+  decisión térmica **per-Linear**, no por bloque. (b) La limitación es **DOBLE**:
+  granularidad de bloque **Y** freeze **binario** — el hard-freeze por canal sube a 0.40
+  (≫ bloque 0.17, ≫ Modelo X 0.10) pero queda bajo el anclaje **graduado** (~0.6). Cura
+  completa: termostato **per-Linear/canal + graduado (soft)**. Ambos factores necesarios.
 
 ---
 
@@ -146,11 +155,14 @@ Subclases/infra reutilizadas: `phase5/ablated_trainer.py` (AblatedTrainer + Reve
    cabeza separable; resultado: la retención simultánea exige capacidad + anclaje
    por-parámetro, y el congelamiento por **bloque** de Modelo X es demasiado crudo
    (refuta la predicción "EWC→hard-freeze"). Ver `phase9/README_fase9.md`.
-4. **(Cabo de F9) Termostato con granularidad SUB-BLOQUE.** Congelar por fila/canal según
-   curvatura local (no por bloque entero) y re-correr el test 9.3: ¿cierra la brecha con
-   EWC por-parámetro? Es la mejora de diseño que el resultado de F9 señala directamente.
-5. **(Opcional) Salir del juguete.** Tarea más realista que el lag-shift sintético
+4. **~~Termostato con granularidad sub-bloque.~~ CARACTERIZADO (Fase 10).** La brecha
+   SÍ se cierra: basta granularidad **per-Linear** (no hace falta per-param) + freeze
+   **graduado** (no binario). Ambos factores necesarios. Ver `phase10/README_fase10.md`.
+5. **(Cabo de F10 → Fase 11) Implementar el termostato per-Linear + compuerta graduada**
+   en `thermodynamics.py` y el paso de gradiente natural; re-correr 9.1/10 con la PROPIA
+   curvatura K-FAC de Modelo X (sin el Fisher de EWC). Prueba de fuego del rediseño.
+6. **(Opcional) Salir del juguete.** Tarea más realista que el lag-shift sintético
    (p.ej. texto a nivel carácter con deriva real) para reforzar la validez externa.
-6. **(Opcional) Medir ms/paso CPU vs MPS** sistemático (cierre cuantitativo del paso #2).
-7. **(Opcional) Calendario de consolidación principiado** que escale con la profundidad
+7. **(Opcional) Medir ms/paso CPU vs MPS** sistemático (cierre cuantitativo del paso #2).
+8. **(Opcional) Calendario de consolidación principiado** que escale con la profundidad
    automáticamente (en la Fase 4.4 se ajustó a mano).
