@@ -86,6 +86,14 @@ conclusiones se ganan con datos, no se asumen.
   granularidad de bloque **Y** freeze **binario** — el hard-freeze por canal sube a 0.40
   (≫ bloque 0.17, ≫ Modelo X 0.10) pero queda bajo el anclaje **graduado** (~0.6). Cura
   completa: termostato **per-Linear/canal + graduado (soft)**. Ambos factores necesarios.
+  El **factorial 2×4 completo** (10.3) lo cuantifica: efecto dureza **+0.17**, efecto
+  grano **+0.20/+0.25**, ~aditivos; mejor celda soft×param=0.68; el orden fino dentro de
+  sub-bloque es ruido (±0.1), el acantilado de block es robusto. La **dinámica** (10.4)
+  añade dos patrones que el estado-final ocultaba: (a) **A muere EN el melt global**
+  (<0.5 en ~10 pasos del switch), no por erosión durante B → la F11 necesita **melt
+  selectivo**, no solo freeze fino; (b) la **señal per-Linear existe** (spread de
+  Tr(F⁻¹) de 3–4× entre las Linears de un bloque, estable) → decidir per-Linear con la
+  curvatura que K-FAC ya calcula es viable a coste extra cero.
 
 ---
 
@@ -101,10 +109,13 @@ pip install -r modelo_x/requirements.txt        # torch, matplotlib
 
 # 2) desde el directorio PADRE de modelo_x/:
 python -m modelo_x.run_demo                      # demo base (arco de un Cisne Negro)
-python -m modelo_x.phase4.run_phase4             # orquestador de cada fase (N = 4..7)
+python -m modelo_x.phase4.run_phase4             # orquestador de cada fase (N = 4..10)
 python -m modelo_x.phase5.run_phase5
 python -m modelo_x.phase6.run_phase6
 python -m modelo_x.phase7.run_phase7
+python -m modelo_x.phase8.run_phase8             # head-to-head EWC (corrige 6.3)
+python -m modelo_x.phase9.run_phase9             # bloque vs por-parámetro (multi-cabeza)
+python -m modelo_x.phase10.run_phase10           # granularidad×dureza + dinámica del olvido
 
 # experimentos sueltos:
 python -m modelo_x.phase5.exp_reversible         # p.ej. el test de ahorro
@@ -130,7 +141,7 @@ modelo_x/
   train.py           # Trainer (lazo completo); surrogate REINFORCE opcional
   run_demo.py        # demo de la Fase 2 (genera feedback_loop.png/csv)
   README.md          # racional Fase 2 (por qué PyTorch+MPS y no JAX)
-  phase3/  ...  phase7/   # cada una con run_phaseN.py, README_faseN.md y experimentos
+  phase3/  ...  phase10/  # cada una con run_phaseN.py, README_faseN.md y experimentos
 ```
 
 Subclases/infra reutilizadas: `phase5/ablated_trainer.py` (AblatedTrainer + ReversibleTask
@@ -158,9 +169,13 @@ Subclases/infra reutilizadas: `phase5/ablated_trainer.py` (AblatedTrainer + Reve
 4. **~~Termostato con granularidad sub-bloque.~~ CARACTERIZADO (Fase 10).** La brecha
    SÍ se cierra: basta granularidad **per-Linear** (no hace falta per-param) + freeze
    **graduado** (no binario). Ambos factores necesarios. Ver `phase10/README_fase10.md`.
-5. **(Cabo de F10 → Fase 11) Implementar el termostato per-Linear + compuerta graduada**
-   en `thermodynamics.py` y el paso de gradiente natural; re-correr 9.1/10 con la PROPIA
-   curvatura K-FAC de Modelo X (sin el Fisher de EWC). Prueba de fuego del rediseño.
+5. **(Cabo de F10 → Fase 11) Rediseño del termostato, TRES ingredientes medidos:**
+   (a) **melt SELECTIVO** (10.4: el melt global mata A en ~10 pasos; sin esto nada más
+   importa), (b) decisión **per-Linear** con las trazas K-FAC existentes (señal
+   verificada en 10.4, spread 3–4×), y (c) compuerta **graduada** en vez de binaria
+   (factorial 10.3: +0.17). Objetivo cuantificado: la celda soft×tensor ≈ **0.57** del
+   factorial, con la PROPIA curvatura de Modelo X (sin el Fisher de EWC). Prueba de
+   fuego en el benchmark 9.1.
 6. **(Opcional) Salir del juguete.** Tarea más realista que el lag-shift sintético
    (p.ej. texto a nivel carácter con deriva real) para reforzar la validez externa.
 7. **(Opcional) Medir ms/paso CPU vs MPS** sistemático (cierre cuantitativo del paso #2).

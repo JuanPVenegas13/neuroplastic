@@ -1,9 +1,11 @@
 """Fase 10.2 — Hard-freeze por CANAL en el mecanismo de Modelo X (no por bloque).
 
-10.1 mostró (con el anclaje SUAVE de EWC) que la granularidad por fila/canal es el sweet
-spot. Pero Modelo X no ancla suave: HARD-CONGELA (enmascara el gradiente: congelado ->
+10.1 mostró (con el anclaje SUAVE de EWC) que toda granularidad sub-bloque retiene.
+Pero Modelo X no ancla suave: HARD-CONGELA (enmascara el gradiente: congelado ->
 sin update). Aquí probamos el mecanismo REAL de Modelo X —congelamiento DURO— pero a
-granularidad de CANAL en vez de BLOQUE, para confirmar que el rediseño cierra la brecha.
+granularidad de CANAL en vez de BLOQUE, para MEDIR si el fix de granularidad basta por
+sí solo. (Resultado honesto: sólo en parte — ver la Lectura al final; la dureza binaria
+es el segundo factor.)
 
 Protocolo: tras consolidar A se mide la importancia por fila (Fisher medio por canal de
 salida) y se CONGELAN DURO (gradiente=0 durante B) las filas más importantes, hasta una
@@ -45,12 +47,22 @@ def _row_importance(fis):
 
 
 def _freeze_mask(fis, tau, level):
-    """Máscara booleana (True = CONGELADO) por parámetro.
-      level='channel': congela las filas con importancia por canal en el top-τ global.
-      level='block'  : congela los bloques cuya importancia media esté en el top-τ.
+    """Máscara booleana (True = CONGELADO) por parámetro. En todos los niveles finos el
+    presupuesto es comparable: se congela ~τ de los PARÁMETROS, eligiendo por importancia
+    al grano pedido (umbral = cuantil global 1-τ de la importancia engrosada).
+      level='param'  : importancia por elemento (grano fino).
+      level='channel': importancia por fila/canal de salida.
+      level='tensor' : importancia media por matriz de pesos (cada Linear entera o nada).
+      level='block'  : congela los top-⌈τ·G⌉ grupos de bloque (b0/b1/shared) — grano tan
+                       grueso que el presupuesto sólo puede ser por grupos, no por params.
     """
-    if level == "channel":
-        imp = _row_importance(fis)
+    if level in ("param", "channel", "tensor"):
+        if level == "param":
+            imp = fis
+        elif level == "channel":
+            imp = _row_importance(fis)
+        else:
+            imp = {n: torch.full_like(f, f.mean().item()) for n, f in fis.items()}
         allv = torch.cat([v.flatten() for v in imp.values()])
         thr = torch.quantile(allv, 1.0 - tau)
         return {n: (v >= thr) for n, v in imp.items()}
