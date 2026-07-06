@@ -93,7 +93,9 @@ conclusiones se ganan con datos, no se asumen.
   (<0.5 en ~10 pasos del switch), no por erosión durante B → la F11 necesita **melt
   selectivo**, no solo freeze fino; (b) la **señal per-Linear existe** (spread de
   Tr(F⁻¹) de 3–4× entre las Linears de un bloque, estable) → decidir per-Linear con la
-  curvatura que K-FAC ya calcula es viable a coste extra cero.
+  curvatura que K-FAC ya calcula es viable a coste extra cero; (c) la **re-consolidación
+  tras el melt es incompleta y heterogénea** (b0 queda MELTED hasta el final del run;
+  solo b1 re-congela) — tercer síntoma del termostato que la F11 debe atender.
 
 ---
 
